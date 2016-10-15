@@ -1,6 +1,7 @@
 package pt.uc.dei.wsvd.bench.tpcc.versions;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -34,16 +35,15 @@ public class Payment_VxA {
         StringBuffer query = null;
         Connection con = Database.pickConnection();
         try {
-            Statement stmt = Database.createStatement(con);
             query = new StringBuffer();
-            query.append("UPDATE tpcc_warehouse SET w_ytd = w_ytd + ");
-            query.append(h_amount);
-            query.append(" WHERE w_id = '");
-            query.append(w_id);
-            query.append("'");
-            //  printMessage(query.toString());
+            query.append("UPDATE tpcc_warehouse SET w_ytd = w_ytd + ? WHERE w_id = ?");
+            PreparedStatement stmt = 
+                            Database.pickConnection().prepareStatement(query.toString());
+            stmt.setDouble(1, h_amount);
+            stmt.setString(2, w_id);
+            
             try {
-                result = stmt.executeUpdate(query.toString());
+                result = stmt.executeUpdate();
             } catch (SQLException e) {
                 throw new Exception("paymentTransaction SQLException " + query.toString() + " :" + e.getMessage());
             }

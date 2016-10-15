@@ -1,6 +1,7 @@
 package pt.uc.dei.wsvd.bench.tpcw.versions;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import pt.uc.dei.wsvd.bench.Database;
@@ -19,11 +20,17 @@ public class AdminUpdate_VxA {
         Connection con = Database.pickConnection();
         try {
             // Prepare SQL
-            Statement statement = Database.createStatement(con);
-            statement.executeUpdate("UPDATE tpcw_item "
-                    + " SET i_cost = " + cost + ", i_image = '" + image + "', i_thumbnail = '" + thumbnail + "', i_pub_date = sysdate "
-                    + " WHERE i_id = " + i_id);
-            statement.close();
+            PreparedStatement stmt = 
+                            Database.pickConnection().prepareStatement("UPDATE tpcw_item "
+                    + " SET i_cost = ?, i_image = ?, i_thumbnail = ?, i_pub_date = sysdate "
+                    + " WHERE i_id = ?");
+            stmt.setDouble(1, cost);
+            stmt.setString(2, image);
+            stmt.setString(3, thumbnail);
+            stmt.setInt(4, i_id);
+            
+            stmt.executeUpdate();
+            stmt.close();
 
             Statement related = Database.createStatement(con);
             ResultSet rs = related.executeQuery("SELECT ol_i_id "
@@ -56,14 +63,14 @@ public class AdminUpdate_VxA {
             }
             rs.close();
             related.close();
-            {
+            
                 // Prepare SQL
-                statement = Database.createStatement(con);
+                Statement statement = Database.createStatement(con);
                 statement.executeUpdate("UPDATE tpcw_item "
                         + "SET i_related1 = " + related_items[0] + ", i_related2 = " + related_items[1] + ", i_related3 = " + related_items[2]
                         + ", i_related4 = " + related_items[3] + ", i_related5 = " + related_items[4] + " "
                         + " WHERE i_id = " + i_id);
-            }
+            
             statement.close();
             con.commit();
         } catch (java.lang.Exception ex) {
