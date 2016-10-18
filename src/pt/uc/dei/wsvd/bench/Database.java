@@ -14,10 +14,12 @@
  ***************************************************************************** */
 package pt.uc.dei.wsvd.bench;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,8 +45,6 @@ public class Database {
     private static final String server = "soa-sut-db.dei.uc.pt";
     private static final int port = 1521;
     private static final String sid = "orcl";
-    private static final String userName = "wsdbench";
-    private static final String passwd = "Samsung";
     private static final String driverName = "oracle.jdbc.driver.OracleDriver";
     private static final String url = "jdbc:oracle:thin:@" + server + ":" + port + ":" + sid;
     //
@@ -61,7 +61,7 @@ public class Database {
             for (; pooll.size() < DATABASE_CONNECTION_POOL_SIZE;) {
                 Connection c = null;
                 try {
-                    c = DriverManager.getConnection(url, userName, passwd);
+                    c = getConnection();
                     succes = true;
                 } catch (SQLException e) {
                     logger.log(Level.SEVERE,"Nao consegue criar conn:  {} ", e);
@@ -93,7 +93,7 @@ public class Database {
                         return con;
                     } else {
                         usage.remove(con);
-                        Connection c = DriverManager.getConnection(url, userName, passwd);
+                        Connection c = getConnection();
                         usage.put(c, new AtomicInteger(0));
                         return c;
                     }
@@ -127,7 +127,7 @@ public class Database {
                     usage.remove(con);
                     Connection c = null;
                     try {
-                        c = DriverManager.getConnection(url, userName, passwd);
+                        c = getConnection();
                     } catch (SQLException e) {
                         logger.info("Nao consegue criar conn....");
                         logger.log(Level.SEVERE,"e = {}", e);
@@ -146,4 +146,15 @@ public class Database {
         st.setMaxRows(CIVS_DATABASE_MAX_ROWS);
         return st;
     }
+    
+    public static Connection getConnection() throws SQLException{
+        Properties prop = new Properties();
+        try {
+            prop.load(Database.class.getResourceAsStream("database.config.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return DriverManager.getConnection(url, prop.getProperty("username"), prop.getProperty("password"));
+    }
+    
 }
